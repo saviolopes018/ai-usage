@@ -1,0 +1,74 @@
+{
+  "expo": {
+    "name": "AI Usage Monitor",
+    "slug": "ai-usage-monitor",
+    "version": "1.4.0",
+    "scheme": "ai-usage-monitor",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "buildNumber": "5",
+      "supportsTablet": true,
+      "bundleIdentifier": "com.saviolopes.aiusagemonitor",
+      "entitlements": {
+        "com.apple.security.application-groups": [
+          "group.com.saviolopes.aiusagemonitor"
+        ]
+      },
+      "infoPlist": {
+        "NSLocalNetworkUsageDescription": "O AI Usage Monitor encontra e consulta o agent executando no seu Mac.",
+        "NSBonjourServices": [
+          "_ai-usage._tcp"
+        ],
+        "NSAppTransportSecurity": {
+          "NSAllowsLocalNetworking": true
+        }
+      }
+    },
+    "android": {
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.ACCESS_WIFI_STATE",
+        "android.permission.CHANGE_WIFI_MULTICAST_STATE"
+      ],
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.saviolopes.aiusagemonitor"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-dev-client",
+      "expo-notifications",
+      "expo-secure-store",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Permita que o AI Usage Monitor use a câmera para ler o QR de pareamento exibido pelo seu Mac.",
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          },
+          "ios": {
+            "buildReactNativeFromSource": true
+          }
+        }
+      ],
+      "expo-asset",
+      "expo-font"
+    ]
+  }
+}
