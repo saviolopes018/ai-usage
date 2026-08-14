@@ -57,6 +57,21 @@ Nenhuma credencial do Codex ou Claude é lida pelo aplicativo. O agent conversa 
 | Descoberta | Bonjour/mDNS | Encontrar o agent sem fixar o IP do Mac |
 | Transporte | HTTP e WebSocket | Snapshot, refresh, diagnóstico e atualizações |
 
+## Miniapp para macOS
+
+O cliente nativo em `macos/` coloca o monitor na barra de menus e usa o `usage-agent` já instalado. Ele lê a configuração local em `~/.ai-usage/config.json`, conecta-se somente a `127.0.0.1` e não mantém outra cópia do token.
+
+Para executar os testes e gerar um `.app` local:
+
+```bash
+cd macos
+swift test
+./scripts/build-app.sh
+open "dist/AI Usage Monitor.app"
+```
+
+O app requer macOS 13 ou superior. A build local não é assinada nem notarizada; se o Gatekeeper bloquear a primeira abertura, use **Abrir** no menu de contexto do Finder.
+
 ## Requisitos
 
 ### Agent
