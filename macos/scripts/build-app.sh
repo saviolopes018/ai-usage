@@ -10,9 +10,10 @@ cd "${MACOS_DIR}"
 swift build -c release
 BIN_DIR="$(swift build -c release --show-bin-path)"
 
-mkdir -p "${APP_DIR}/Contents/MacOS" "${APP_DIR}/Contents/Resources"
+mkdir -p "${APP_DIR}/Contents/MacOS" "${APP_DIR}/Contents/Resources/Providers"
 cp "${BIN_DIR}/AIUsageMenu" "${APP_DIR}/Contents/MacOS/AIUsageMenu"
 cp "${MACOS_DIR}/Resources/Info.plist" "${APP_DIR}/Contents/Info.plist"
+cp "${MACOS_DIR}/Sources/AIUsageMenu/Resources/Providers/"*.png "${APP_DIR}/Contents/Resources/Providers/"
 chmod 755 "${APP_DIR}/Contents/MacOS/AIUsageMenu"
 codesign --force --deep --sign - "${APP_DIR}"
 

@@ -149,14 +149,37 @@ private struct ProviderView: View {
         connectionState != .connected || Formatters.isStale(provider.observedAt)
     }
 
+    private var providerIcon: NSImage? {
+        let url = Bundle.main.url(
+            forResource: provider.provider,
+            withExtension: "png",
+            subdirectory: "Providers"
+        ) ?? Bundle.module.url(
+            forResource: provider.provider,
+            withExtension: "png",
+            subdirectory: "Providers"
+        )
+        guard let url else { return nil }
+        return NSImage(contentsOf: url)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 10) {
-                Image(systemName: provider.provider == "codex" ? "circle.hexagongrid.fill" : "sparkle")
-                    .symbolRenderingMode(.hierarchical)
-                    .foregroundStyle(provider.provider == "codex" ? Color.teal : Color.orange)
-                    .font(.system(size: 18, weight: .medium))
-                    .frame(width: 26, height: 26)
+                Group {
+                    if let providerIcon {
+                        Image(nsImage: providerIcon)
+                            .resizable()
+                            .scaledToFit()
+                    } else {
+                        Image(systemName: "questionmark.circle.fill")
+                            .symbolRenderingMode(.hierarchical)
+                            .foregroundStyle(Color.secondary)
+                            .font(.system(size: 18, weight: .medium))
+                    }
+                }
+                .frame(width: 26, height: 26)
+                .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(provider.displayName)
                         .font(.system(size: 15, weight: .semibold))
