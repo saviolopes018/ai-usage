@@ -6,7 +6,10 @@ let package = Package(
     platforms: [.macOS(.v13)],
     products: [.executable(name: "AIUsageMenu", targets: ["AIUsageMenu"])],
     targets: [
-        .executableTarget(name: "AIUsageMenu"),
+        .executableTarget(
+            name: "AIUsageMenu",
+            resources: [.process("Resources")]
+        ),
         .testTarget(name: "AIUsageMenuTests", dependencies: ["AIUsageMenu"]),
     ]
 )
