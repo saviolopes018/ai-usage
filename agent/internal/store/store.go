@@ -28,6 +28,10 @@ func (s *Store) UpdateProvider(provider domain.ProviderUsage) bool {
 	found := false
 	for i := range next.Providers {
 		if next.Providers[i].Provider == provider.Provider {
+			// Rate-limit collectors and the token-history scanner update independently.
+			if provider.Tokens == nil {
+				provider.Tokens = next.Providers[i].Tokens
+			}
 			next.Providers[i] = provider
 			found = true
 			break

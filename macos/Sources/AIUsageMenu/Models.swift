@@ -41,6 +41,7 @@ struct ProviderUsage: Codable, Equatable, Identifiable, Sendable {
     let observedAt: Date
     let fiveHour: UsageWindow?
     let weekly: UsageWindow?
+    let tokens: TokenUsage?
 
     var id: String { provider }
     var displayName: String {
@@ -50,6 +51,13 @@ struct ProviderUsage: Codable, Equatable, Identifiable, Sendable {
         default: return provider.capitalized
         }
     }
+}
+
+struct TokenUsage: Codable, Equatable, Sendable {
+    let inputTokens: Int64
+    let outputTokens: Int64
+    let cachedInputTokens: Int64
+    let totalTokens: Int64
 }
 
 struct UsageWindow: Codable, Equatable, Sendable {

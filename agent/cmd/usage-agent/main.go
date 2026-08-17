@@ -26,6 +26,7 @@ import (
 	"github.com/saviolopes/ai-usage-monitor/agent/internal/server"
 	"github.com/saviolopes/ai-usage-monitor/agent/internal/snapshotcache"
 	"github.com/saviolopes/ai-usage-monitor/agent/internal/store"
+	"github.com/saviolopes/ai-usage-monitor/agent/internal/tokenusage"
 )
 
 func main() {
@@ -241,6 +242,7 @@ func serve(cfg config.Config) error {
 	})
 	runtimeCtx, cancelRuntime := context.WithCancel(context.Background())
 	defer cancelRuntime()
+	go trackTokens(runtimeCtx, st, logger)
 	if snapshotCachePath != "" {
 		updates, unsubscribe := st.Subscribe()
 		defer unsubscribe()
@@ -298,6 +300,41 @@ func serve(cfg config.Config) error {
 			return nil
 		}
 		return err
+	}
+}
+
+func trackTokens(ctx context.Context, st *store.Store, logger *slog.Logger) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		logger.Warn("tokens.home_failed", "error", err)
+		return
+	}
+	refresh := func() {
+		usages, scanErr := tokenusage.Scan(home)
+		if scanErr != nil {
+			logger.Warn("tokens.scan_partial", "error", scanErr)
+		}
+		for providerName, tokens := range usages {
+			snapshot := st.Get()
+			for _, provider := range snapshot.Providers {
+				if provider.Provider == providerName {
+					provider.Tokens = &tokens
+					st.UpdateProvider(provider)
+					break
+				}
+			}
+		}
+	}
+	refresh()
+	ticker := time.NewTicker(5 * time.Minute)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			refresh()
+		case <-ctx.Done():
+			return
+		}
 	}
 }
 

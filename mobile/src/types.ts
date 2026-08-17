@@ -10,6 +10,14 @@ export type ProviderUsage = {
   observedAt: string;
   fiveHour?: UsageWindow;
   weekly?: UsageWindow;
+  tokens?: TokenUsage;
+};
+
+export type TokenUsage = {
+  inputTokens: number;
+  outputTokens: number;
+  cachedInputTokens: number;
+  totalTokens: number;
 };
 
 export type UsageSnapshot = {

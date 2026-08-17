@@ -63,3 +63,14 @@ func TestSubscribeWithInitialIsAtomic(t *testing.T) {
 		t.Fatalf("missing update: %+v", updated)
 	}
 }
+
+func TestRateLimitUpdatePreservesTokenUsage(t *testing.T) {
+	s := New(domain.InitialSnapshot())
+	tokens := &domain.TokenUsage{InputTokens: 100, OutputTokens: 20, TotalTokens: 120}
+	s.UpdateProvider(domain.ProviderUsage{Provider: "codex", Available: true, ObservedAt: time.Unix(1, 0).UTC(), Tokens: tokens})
+	s.UpdateProvider(domain.ProviderUsage{Provider: "codex", Available: true, ObservedAt: time.Unix(2, 0).UTC()})
+	got := s.Get().Providers[0].Tokens
+	if got == nil || got.TotalTokens != 120 {
+		t.Fatalf("token usage was lost: %+v", got)
+	}
+}

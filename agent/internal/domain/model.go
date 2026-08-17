@@ -24,6 +24,14 @@ type ProviderUsage struct {
 	ObservedAt time.Time    `json:"observedAt"`
 	FiveHour   *UsageWindow `json:"fiveHour,omitempty"`
 	Weekly     *UsageWindow `json:"weekly,omitempty"`
+	Tokens     *TokenUsage  `json:"tokens,omitempty"`
+}
+
+type TokenUsage struct {
+	InputTokens       int64 `json:"inputTokens"`
+	OutputTokens      int64 `json:"outputTokens"`
+	CachedInputTokens int64 `json:"cachedInputTokens"`
+	TotalTokens       int64 `json:"totalTokens"`
 }
 
 type UsageWindow struct {
