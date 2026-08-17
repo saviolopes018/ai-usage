@@ -13,6 +13,8 @@ struct MenuContentView: View {
 
             if let snapshot = model.snapshot {
                 VStack(spacing: 0) {
+                    CombinedTokensView(providers: snapshot.providers)
+                    Divider()
                     ForEach(Array(snapshot.providers.enumerated()), id: \.element.id) { index, provider in
                         ProviderView(
                             provider: provider,
@@ -135,6 +137,31 @@ struct MenuContentView: View {
         case .unauthorized: return "O token local não foi aceito pelo agent."
         case .failed(let message): return message
         default: return "Consultando o serviço local…"
+        }
+    }
+}
+
+private struct CombinedTokensView: View {
+    let providers: [ProviderUsage]
+
+    private var total: Int64? {
+        let values = providers.compactMap(\.tokens?.totalTokens)
+        return values.isEmpty ? nil : values.reduce(0, +)
+    }
+
+    var body: some View {
+        if let total {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Claude + Codex · últimas 24h")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(.secondary)
+                Text("\(total.formatted(.number.notation(.compactName))) tokens")
+                    .font(.system(size: 22, weight: .semibold, design: .rounded).monospacedDigit())
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 13)
+            .accessibilityElement(children: .combine)
         }
     }
 }
