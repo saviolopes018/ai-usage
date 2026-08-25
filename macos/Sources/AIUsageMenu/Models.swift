@@ -58,6 +58,50 @@ struct TokenUsage: Codable, Equatable, Sendable {
     let outputTokens: Int64
     let cachedInputTokens: Int64
     let totalTokens: Int64
+    let periods: [String: TokenPeriodUsage]?
+}
+
+struct TokenPeriodUsage: Codable, Equatable, Sendable {
+    let inputTokens: Int64
+    let outputTokens: Int64
+    let cachedInputTokens: Int64
+    let totalTokens: Int64
+}
+
+enum TokenPeriod: String, CaseIterable, Identifiable {
+    case day = "24h"
+    case sevenDays = "7d"
+    case fourteenDays = "14d"
+    case thirtyDays = "30d"
+
+    var id: String { rawValue }
+    var buttonLabel: String {
+        switch self {
+        case .day: return "24h"
+        case .sevenDays: return "7D"
+        case .fourteenDays: return "14D"
+        case .thirtyDays: return "30D"
+        }
+    }
+    var description: String {
+        switch self {
+        case .day: return "últimas 24h"
+        case .sevenDays: return "últimos 7 dias"
+        case .fourteenDays: return "últimos 14 dias"
+        case .thirtyDays: return "últimos 30 dias"
+        }
+    }
+}
+
+enum CombinedTokenUsage {
+    static func total(for period: TokenPeriod, providers: [ProviderUsage]) -> Int64? {
+        let values = providers.compactMap { provider -> Int64? in
+            guard let tokens = provider.tokens else { return nil }
+            if period == .day { return tokens.totalTokens }
+            return tokens.periods?[period.rawValue]?.totalTokens
+        }
+        return values.isEmpty ? nil : values.reduce(0, +)
+    }
 }
 
 struct UsageWindow: Codable, Equatable, Sendable {

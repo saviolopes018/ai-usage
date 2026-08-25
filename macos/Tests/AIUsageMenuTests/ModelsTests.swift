@@ -45,4 +45,14 @@ final class ModelsTests: XCTestCase {
         XCTAssertEqual(Formatters.reset(now.addingTimeInterval(-1), now: now), "Renovação pendente")
         XCTAssertTrue(Formatters.reset(now.addingTimeInterval(3600), now: now).hasPrefix("Renova "))
     }
+
+    func testCombinedTokenTotalUsesSelectedPeriod() throws {
+        let data = Data(#"{"protocolVersion":1,"agentVersion":"1.5.0","capabilities":["token-usage-periods"],"device":"Mac","online":true,"updatedAt":"2026-08-25T12:00:00Z","providers":[{"provider":"codex","available":true,"observedAt":"2026-08-25T12:00:00Z","tokens":{"inputTokens":10,"outputTokens":2,"cachedInputTokens":0,"totalTokens":12,"periods":{"24h":{"inputTokens":10,"outputTokens":2,"cachedInputTokens":0,"totalTokens":12},"7d":{"inputTokens":30,"outputTokens":5,"cachedInputTokens":0,"totalTokens":35},"14d":{"inputTokens":50,"outputTokens":8,"cachedInputTokens":0,"totalTokens":58},"30d":{"inputTokens":70,"outputTokens":10,"cachedInputTokens":0,"totalTokens":80}}}},{"provider":"claude","available":true,"observedAt":"2026-08-25T12:00:00Z","tokens":{"inputTokens":20,"outputTokens":3,"cachedInputTokens":0,"totalTokens":23,"periods":{"24h":{"inputTokens":20,"outputTokens":3,"cachedInputTokens":0,"totalTokens":23},"7d":{"inputTokens":40,"outputTokens":7,"cachedInputTokens":0,"totalTokens":47},"14d":{"inputTokens":60,"outputTokens":9,"cachedInputTokens":0,"totalTokens":69},"30d":{"inputTokens":90,"outputTokens":12,"cachedInputTokens":0,"totalTokens":102}}}}]}"#.utf8)
+        let snapshot = try JSONDecoder.usageDecoder().decode(UsageSnapshot.self, from: data)
+
+        XCTAssertEqual(CombinedTokenUsage.total(for: .day, providers: snapshot.providers), 35)
+        XCTAssertEqual(CombinedTokenUsage.total(for: .sevenDays, providers: snapshot.providers), 82)
+        XCTAssertEqual(CombinedTokenUsage.total(for: .fourteenDays, providers: snapshot.providers), 127)
+        XCTAssertEqual(CombinedTokenUsage.total(for: .thirtyDays, providers: snapshot.providers), 182)
+    }
 }
