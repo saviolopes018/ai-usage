@@ -143,20 +143,26 @@ struct MenuContentView: View {
 
 private struct CombinedTokensView: View {
     let providers: [ProviderUsage]
+    @State private var selectedPeriod: TokenPeriod = .day
 
-    private var total: Int64? {
-        let values = providers.compactMap(\.tokens?.totalTokens)
-        return values.isEmpty ? nil : values.reduce(0, +)
-    }
+    private var total: Int64? { CombinedTokenUsage.total(for: selectedPeriod, providers: providers) }
 
     var body: some View {
-        if let total {
+        if CombinedTokenUsage.total(for: .day, providers: providers) != nil {
             VStack(alignment: .leading, spacing: 3) {
-                Text("Claude + Codex · últimas 24h")
+                Text("Claude + Codex · \(selectedPeriod.description)")
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(.secondary)
-                Text("\(total.formatted(.number.notation(.compactName))) tokens")
+                Text(total.map { "\($0.formatted(.number.notation(.compactName))) tokens" } ?? "Sem dados")
                     .font(.system(size: 22, weight: .semibold, design: .rounded).monospacedDigit())
+                Picker("Período do consumo de tokens", selection: $selectedPeriod) {
+                    ForEach(TokenPeriod.allCases) { period in
+                        Text(period.buttonLabel).tag(period)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .controlSize(.small)
+                .padding(.top, 7)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 16)

@@ -28,10 +28,11 @@ type ProviderUsage struct {
 }
 
 type TokenUsage struct {
-	InputTokens       int64 `json:"inputTokens"`
-	OutputTokens      int64 `json:"outputTokens"`
-	CachedInputTokens int64 `json:"cachedInputTokens"`
-	TotalTokens       int64 `json:"totalTokens"`
+	InputTokens       int64                 `json:"inputTokens"`
+	OutputTokens      int64                 `json:"outputTokens"`
+	CachedInputTokens int64                 `json:"cachedInputTokens"`
+	TotalTokens       int64                 `json:"totalTokens"`
+	Periods           map[string]TokenUsage `json:"periods,omitempty"`
 }
 
 type UsageWindow struct {

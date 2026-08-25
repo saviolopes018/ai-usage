@@ -19,20 +19,31 @@ func Scan(home string) (map[string]domain.TokenUsage, error) {
 }
 
 func ScanAt(home string, now time.Time) (map[string]domain.TokenUsage, error) {
-	cutoff := now.Add(-24 * time.Hour)
+	cutoffs := map[string]time.Time{
+		"24h": now.Add(-24 * time.Hour),
+		"7d":  now.Add(-7 * 24 * time.Hour),
+		"14d": now.Add(-14 * 24 * time.Hour),
+		"30d": now.Add(-30 * 24 * time.Hour),
+	}
 	result := map[string]domain.TokenUsage{}
 	var errs []error
-	if usage, err := scanCodex(filepath.Join(home, ".codex", "sessions"), cutoff); err == nil {
-		result["codex"] = usage
+	if usage, err := scanCodex(filepath.Join(home, ".codex", "sessions"), cutoffs); err == nil {
+		result["codex"] = usageWithPeriods(usage)
 	} else if !errors.Is(err, os.ErrNotExist) {
 		errs = append(errs, err)
 	}
-	if usage, err := scanClaude(filepath.Join(home, ".claude", "projects"), cutoff); err == nil {
-		result["claude"] = usage
+	if usage, err := scanClaude(filepath.Join(home, ".claude", "projects"), cutoffs); err == nil {
+		result["claude"] = usageWithPeriods(usage)
 	} else if !errors.Is(err, os.ErrNotExist) {
 		errs = append(errs, err)
 	}
 	return result, errors.Join(errs...)
+}
+
+func usageWithPeriods(periods map[string]domain.TokenUsage) domain.TokenUsage {
+	usage := periods["24h"]
+	usage.Periods = periods
+	return usage
 }
 
 func jsonlFiles(root string) ([]string, error) {
@@ -49,12 +60,12 @@ func jsonlFiles(root string) ([]string, error) {
 	return files, err
 }
 
-func scanCodex(root string, cutoff time.Time) (domain.TokenUsage, error) {
+func scanCodex(root string, cutoffs map[string]time.Time) (map[string]domain.TokenUsage, error) {
 	files, err := jsonlFiles(root)
 	if err != nil {
-		return domain.TokenUsage{}, err
+		return nil, err
 	}
-	var total domain.TokenUsage
+	totals := make(map[string]domain.TokenUsage, len(cutoffs))
 	for _, path := range files {
 		file, err := os.Open(path)
 		if err != nil {
@@ -80,18 +91,22 @@ func scanCodex(root string, cutoff time.Time) (domain.TokenUsage, error) {
 			if json.Unmarshal(scanner.Bytes(), &record) == nil && record.Payload.Info.Total.Total > 0 {
 				value := record.Payload.Info.Total
 				current := domain.TokenUsage{InputTokens: value.Input, CachedInputTokens: value.Cached, OutputTokens: value.Output, TotalTokens: value.Total}
-				if !record.Timestamp.Before(cutoff) {
-					total.InputTokens += positiveDelta(current.InputTokens, previous.InputTokens)
-					total.CachedInputTokens += positiveDelta(current.CachedInputTokens, previous.CachedInputTokens)
-					total.OutputTokens += positiveDelta(current.OutputTokens, previous.OutputTokens)
-					total.TotalTokens += positiveDelta(current.TotalTokens, previous.TotalTokens)
+				for period, cutoff := range cutoffs {
+					if !record.Timestamp.Before(cutoff) {
+						total := totals[period]
+						total.InputTokens += positiveDelta(current.InputTokens, previous.InputTokens)
+						total.CachedInputTokens += positiveDelta(current.CachedInputTokens, previous.CachedInputTokens)
+						total.OutputTokens += positiveDelta(current.OutputTokens, previous.OutputTokens)
+						total.TotalTokens += positiveDelta(current.TotalTokens, previous.TotalTokens)
+						totals[period] = total
+					}
 				}
 				previous = current
 			}
 		}
 		_ = file.Close()
 	}
-	return total, nil
+	return totals, nil
 }
 
 func positiveDelta(current, previous int64) int64 {
@@ -101,13 +116,15 @@ func positiveDelta(current, previous int64) int64 {
 	return current - previous
 }
 
-func scanClaude(root string, cutoff time.Time) (domain.TokenUsage, error) {
+func scanClaude(root string, cutoffs map[string]time.Time) (map[string]domain.TokenUsage, error) {
 	files, err := jsonlFiles(root)
 	if err != nil {
-		return domain.TokenUsage{}, err
+		return nil, err
 	}
-	var total domain.TokenUsage
-	messages := map[string]domain.TokenUsage{}
+	messages := make(map[string]map[string]domain.TokenUsage, len(cutoffs))
+	for period := range cutoffs {
+		messages[period] = map[string]domain.TokenUsage{}
+	}
 	for _, path := range files {
 		file, err := os.Open(path)
 		if err != nil {
@@ -128,7 +145,7 @@ func scanClaude(root string, cutoff time.Time) (domain.TokenUsage, error) {
 					} `json:"usage"`
 				} `json:"message"`
 			}
-			if json.Unmarshal(scanner.Bytes(), &record) != nil || record.Message.ID == "" || record.Timestamp.Before(cutoff) {
+			if json.Unmarshal(scanner.Bytes(), &record) != nil || record.Message.ID == "" {
 				continue
 			}
 			usage := record.Message.Usage
@@ -137,17 +154,27 @@ func scanClaude(root string, cutoff time.Time) (domain.TokenUsage, error) {
 			}
 			input := usage.Input + usage.CacheCreation + usage.CacheRead
 			current := domain.TokenUsage{InputTokens: input, CachedInputTokens: usage.CacheRead, OutputTokens: usage.Output, TotalTokens: input + usage.Output}
-			if previous, exists := messages[record.Message.ID]; !exists || current.TotalTokens > previous.TotalTokens {
-				messages[record.Message.ID] = current
+			for period, cutoff := range cutoffs {
+				if record.Timestamp.Before(cutoff) {
+					continue
+				}
+				if previous, exists := messages[period][record.Message.ID]; !exists || current.TotalTokens > previous.TotalTokens {
+					messages[period][record.Message.ID] = current
+				}
 			}
 		}
 		_ = file.Close()
 	}
-	for _, usage := range messages {
-		total.InputTokens += usage.InputTokens
-		total.CachedInputTokens += usage.CachedInputTokens
-		total.OutputTokens += usage.OutputTokens
-		total.TotalTokens += usage.TotalTokens
+	totals := make(map[string]domain.TokenUsage, len(cutoffs))
+	for period, periodMessages := range messages {
+		var total domain.TokenUsage
+		for _, usage := range periodMessages {
+			total.InputTokens += usage.InputTokens
+			total.CachedInputTokens += usage.CachedInputTokens
+			total.OutputTokens += usage.OutputTokens
+			total.TotalTokens += usage.TotalTokens
+		}
+		totals[period] = total
 	}
-	return total, nil
+	return totals, nil
 }
