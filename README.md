@@ -125,6 +125,18 @@ Em outro terminal, confira o estado:
 
 ### 2. Configure o Claude Code
 
+Confirme que o Claude Code CLI está autenticado:
+
+```bash
+claude auth status
+```
+
+Se `loggedIn` for `false`, autentique-o antes de continuar:
+
+```bash
+claude auth login
+```
+
 Depois de mover o binário para seu caminho definitivo:
 
 ```bash
@@ -432,13 +444,21 @@ Feche o Xcode e remova apenas caches regeneráveis necessários, como o DerivedD
 
 ### Claude aparece sem leitura
 
-Execute:
+Primeiro, confira a autenticação do Claude Code:
+
+```bash
+claude auth status
+```
+
+Se `loggedIn` for `false`, execute `claude auth login`. O agent obtém o token OAuth criado pelo próprio Claude Code no macOS Keychain; nenhuma credencial precisa ser adicionada ao código ou aos arquivos de configuração.
+
+Depois, confirme a configuração do `statusLine`:
 
 ```bash
 ./usage-agent configure-claude
 ```
 
-Depois abra o Claude Code e gere uma nova atualização de status, ou use o botão **Atualizar** no app.
+Reinicie o serviço com `./usage-agent install-service` se o binário foi atualizado. Em seguida, use o botão **Atualizar** no app. Se o endpoint OAuth estiver temporariamente indisponível, abra o Claude Code para permitir uma atualização pelo `statusLine`.
 
 ### Widget não atualiza
 
