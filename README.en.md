@@ -45,7 +45,7 @@ The project combines a Go agent running on macOS with an Expo/React Native app. 
 
 The agent keeps a single concurrent snapshot in memory and only publishes actual changes. A client immediately receives the current state when it connects; subsequent readings are distributed to WebSocket clients. Ping/pong removes inactive connections, while `SIGINT` and `SIGTERM` trigger graceful shutdown.
 
-The app never reads Codex or Claude credentials. The agent communicates with tools already authenticated on the Mac and only exposes percentages, reset times, and operational state.
+The agent does not read Codex credentials. To refresh Claude limits, it reads the existing token from macOS Keychain only in memory and uses statusLine/CLI as a fallback. The agent exposes only percentages, reset times, and operational state.
 
 ## Components
 
@@ -117,6 +117,8 @@ After moving the binary to its permanent location:
 ```
 
 This preserves all existing keys in `~/.claude/settings.json`, creates `~/.claude/settings.json.ai-usage-backup`, and configures `statusLine` with the agent's absolute path.
+
+Active reads automatically use Claude Code's existing authentication in macOS Keychain. The token is neither copied nor persisted by the agent. If Keychain or the OAuth endpoint is unavailable, the agent tries the local Claude Code command. The OAuth usage endpoint is not a stable public API and may change without notice.
 
 The Codex collector needs no additional configuration. It launches `codex app-server --stdio`, negotiates the installed version, and follows rate-limit updates.
 
@@ -266,7 +268,7 @@ The agent persists the latest snapshot to `~/.ai-usage/snapshot.json`. Claude al
 
 ## Refresh and alerts
 
-The app can actively request readings every 30 seconds, 1 minute, or 5 minutes. Pull-to-refresh and the header refresh action request a complete Codex and Claude update.
+The app can actively request readings every 30 seconds, 1 minute, or 5 minutes. Pull-to-refresh and the header refresh action request a complete Codex and Claude update. The agent reads Claude Code's token directly from macOS Keychain for each request; the secret is not written to the agent's caches or logs.
 
 Local alerts are available for:
 

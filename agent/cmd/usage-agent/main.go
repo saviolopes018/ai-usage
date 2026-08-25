@@ -270,10 +270,13 @@ func serve(cfg config.Config) error {
 			func(err error) { logger.Warn("mdns.refresh_failed", "error", err) },
 		)
 	}
-	refresher := claude.Refresher{Binary: "claude"}
+	oauthRefresher := claude.OAuthRefresher{}
+	cliRefresher := claude.Refresher{Binary: "claude"}
+	refresher := claude.AutomaticRefresher{OAuth: oauthRefresher.Refresh, CLI: cliRefresher.Refresh}
 	srv.OnClaudeRefresh(func(ctx context.Context) (domain.ProviderUsage, error) {
 		return refresher.Refresh(ctx, time.Now())
 	})
+	logger.Info("claude.oauth.enabled", "fallback", "cli")
 	if claudeCachePath != "" {
 		srv.OnClaudeUpdate(func(usage domain.ProviderUsage) error {
 			return claude.SaveCache(claudeCachePath, usage)
