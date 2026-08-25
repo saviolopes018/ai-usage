@@ -110,6 +110,18 @@ Check its status from another terminal:
 
 ### 2. Configure Claude Code
 
+Confirm that the Claude Code CLI is authenticated:
+
+```bash
+claude auth status
+```
+
+If `loggedIn` is `false`, authenticate before continuing:
+
+```bash
+claude auth login
+```
+
 After moving the binary to its permanent location:
 
 ```bash
@@ -417,13 +429,21 @@ Close Xcode and remove only the required regenerable caches, such as this projec
 
 ### Claude has no reading
 
-Run:
+First, check Claude Code authentication:
+
+```bash
+claude auth status
+```
+
+If `loggedIn` is `false`, run `claude auth login`. The agent obtains the OAuth token created by Claude Code itself from macOS Keychain; no credential needs to be added to the code or configuration files.
+
+Then confirm the `statusLine` configuration:
 
 ```bash
 ./usage-agent configure-claude
 ```
 
-Then open Claude Code and produce a new status update, or use **Refresh** in the app.
+Restart the service with `./usage-agent install-service` if the binary was updated. Then use **Refresh** in the app. If the OAuth endpoint is temporarily unavailable, open Claude Code to allow a `statusLine` update.
 
 ### The widget does not update
 
