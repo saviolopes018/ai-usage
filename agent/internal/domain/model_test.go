@@ -31,12 +31,21 @@ func TestSnapshotSerialization(t *testing.T) {
 
 func TestInitialSnapshot(t *testing.T) {
 	s := InitialSnapshot()
-	if !s.Online || len(s.Providers) != 2 {
+	if !s.Online || len(s.Providers) != 3 {
 		t.Fatalf("unexpected initial snapshot: %+v", s)
+	}
+	if s.Providers[2].Provider != "opencode" {
+		t.Fatalf("third provider = %q, want opencode", s.Providers[2].Provider)
 	}
 	for _, p := range s.Providers {
 		if p.Available {
 			t.Fatalf("%s should be unavailable", p.Provider)
 		}
+	}
+}
+
+func TestDisplayNameIncludesOpenCode(t *testing.T) {
+	if got := DisplayName("opencode"); got != "OpenCode" {
+		t.Fatalf("DisplayName(opencode) = %q, want OpenCode", got)
 	}
 }

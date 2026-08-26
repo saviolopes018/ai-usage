@@ -50,6 +50,7 @@ func InitialSnapshot() UsageSnapshot {
 	return UsageSnapshot{ProtocolVersion: protocol.Version, AgentVersion: protocol.AgentVersion, Capabilities: append([]string(nil), protocol.Capabilities...), Device: host, Online: true, UpdatedAt: now, Providers: []ProviderUsage{
 		{Provider: "codex", Available: false, ObservedAt: now},
 		{Provider: "claude", Available: false, ObservedAt: now},
+		{Provider: "opencode", Available: false, ObservedAt: now},
 	}}
 }
 
@@ -59,6 +60,9 @@ func DisplayName(provider string) string {
 	}
 	if provider == "claude" {
 		return "Claude"
+	}
+	if provider == "opencode" {
+		return "OpenCode"
 	}
 	return provider
 }

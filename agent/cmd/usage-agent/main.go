@@ -22,6 +22,7 @@ import (
 	"github.com/saviolopes/ai-usage-monitor/agent/internal/launchd"
 	usageLogging "github.com/saviolopes/ai-usage-monitor/agent/internal/logging"
 	mdnsadvertiser "github.com/saviolopes/ai-usage-monitor/agent/internal/mdns"
+	opencodeusage "github.com/saviolopes/ai-usage-monitor/agent/internal/opencode"
 	"github.com/saviolopes/ai-usage-monitor/agent/internal/pairing"
 	"github.com/saviolopes/ai-usage-monitor/agent/internal/server"
 	"github.com/saviolopes/ai-usage-monitor/agent/internal/snapshotcache"
@@ -312,6 +313,14 @@ func trackTokens(ctx context.Context, st *store.Store, logger *slog.Logger) {
 		logger.Warn("tokens.home_failed", "error", err)
 		return
 	}
+	var openCodeTracker *opencodeusage.Tracker
+	if collector, source, resolveErr := opencodeusage.NewLocalCollector(home); resolveErr == nil {
+		tracker := opencodeusage.NewTracker(collector, st)
+		openCodeTracker = &tracker
+		logger.Info("opencode.usage.enabled", "source", source)
+	} else {
+		logger.Info("opencode.usage.disabled", "error", resolveErr)
+	}
 	refresh := func() {
 		usages, scanErr := tokenusage.Scan(home)
 		if scanErr != nil {
@@ -325,6 +334,13 @@ func trackTokens(ctx context.Context, st *store.Store, logger *slog.Logger) {
 					st.UpdateProvider(provider)
 					break
 				}
+			}
+		}
+		if openCodeTracker != nil {
+			if refreshErr := openCodeTracker.Refresh(ctx, time.Now()); refreshErr != nil {
+				logger.Warn("opencode.usage.failed", "error", refreshErr)
+			} else {
+				logger.Info("opencode.usage.updated")
 			}
 		}
 	}

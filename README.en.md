@@ -4,7 +4,7 @@
   <a href="README.md">Português</a> · <strong>English</strong>
 </p>
 
-A local monitor for tracking **Codex** and **Claude Code** usage from your phone without sending provider tokens or credentials to external services.
+A local monitor for tracking **Codex**, **Claude Code**, and **OpenCode** usage from your phone without sending provider tokens or credentials to external services.
 
 The project combines a Go agent running on macOS with an Expo/React Native app. The agent queries locally authenticated tools, publishes authenticated snapshots over the network, and lets the app present usage, reset times, provider availability, and connection health at a glance.
 
@@ -13,6 +13,7 @@ The project combines a Go agent running on macOS with an Expo/React Native app. 
 ## Highlights
 
 - Codex and Claude Code usage-window monitoring.
+- OpenCode token consumption over the last 24 hours, 7, 14, and 30 days.
 - Real-time updates over WebSocket.
 - Automatic Mac discovery using Bonjour/mDNS.
 - QR code pairing with a single-use ticket.
@@ -32,7 +33,8 @@ The project combines a Go agent running on macOS with an Expo/React Native app. 
 │                                                            │
 │  Codex app-server ─┐                                       │
 │                    ├─> usage-agent ─> HTTP + WebSocket      │
-│  Claude statusLine ┘        │              │                │
+│  Claude statusLine ┤        │              │                │
+│  OpenCode database┘        │              │                │
 │                             ├─ local cache  └─ Bonjour/mDNS │
 │                             └─ per-device credentials       │
 └─────────────────────────────────────────────┬──────────────┘
@@ -45,7 +47,7 @@ The project combines a Go agent running on macOS with an Expo/React Native app. 
 
 The agent keeps a single concurrent snapshot in memory and only publishes actual changes. A client immediately receives the current state when it connects; subsequent readings are distributed to WebSocket clients. Ping/pong removes inactive connections, while `SIGINT` and `SIGTERM` trigger graceful shutdown.
 
-The agent does not read Codex credentials. To refresh Claude limits, it reads the existing token from macOS Keychain only in memory and uses statusLine/CLI as a fallback. The agent exposes only percentages, reset times, and operational state.
+The agent does not read Codex or OpenCode credentials. To refresh Claude limits, it reads the existing token from macOS Keychain only in memory and uses statusLine/CLI as a fallback. For OpenCode, it queries only aggregate token counters and timestamps from the local database; prompts and responses are not read.
 
 ## Components
 
@@ -65,6 +67,7 @@ The agent does not read Codex credentials. To refresh Claude limits, it reads th
 - Go 1.26 or a version compatible with `go.mod`.
 - Codex CLI installed and authenticated to monitor Codex.
 - Claude Code installed and authenticated to monitor Claude.
+- OpenCode CLI or Desktop installed to monitor OpenCode tokens.
 
 ### Mobile app
 
@@ -133,6 +136,8 @@ This preserves all existing keys in `~/.claude/settings.json`, creates `~/.claud
 Active reads automatically use Claude Code's existing authentication in macOS Keychain. The token is neither copied nor persisted by the agent. If Keychain or the OAuth endpoint is unavailable, the agent tries the local Claude Code command. The OAuth usage endpoint is not a stable public API and may change without notice.
 
 The Codex collector needs no additional configuration. It launches `codex app-server --stdio`, negotiates the installed version, and follows rate-limit updates.
+
+The OpenCode collector also needs no configuration. It prefers `opencode db --format json` when the CLI is available and falls back to reading `~/.local/share/opencode/opencode.db` in read-only mode for the Desktop app. OpenCode does not publish a single five-hour or weekly quota, so the monitor displays only aggregate token usage by period.
 
 ### 3. Install app dependencies
 
@@ -280,7 +285,7 @@ The agent persists the latest snapshot to `~/.ai-usage/snapshot.json`. Claude al
 
 ## Refresh and alerts
 
-The app can actively request readings every 30 seconds, 1 minute, or 5 minutes. Pull-to-refresh and the header refresh action request a complete Codex and Claude update. The agent reads Claude Code's token directly from macOS Keychain for each request; the secret is not written to the agent's caches or logs.
+The app can actively request readings every 30 seconds, 1 minute, or 5 minutes. Pull-to-refresh and the header refresh action request a complete Codex and Claude update. OpenCode tokens are refreshed by the agent every five minutes. The agent reads Claude Code's token directly from macOS Keychain for each request; the secret is not written to the agent's caches or logs.
 
 Local alerts are available for:
 
@@ -384,6 +389,7 @@ agent/
   cmd/usage-agent/       CLI and process lifecycle
   internal/claude/       Claude statusLine, refresh, and cache
   internal/codex/        app-server, JSON-RPC, and rate limits
+  internal/opencode/     aggregate tokens from the CLI or local database
   internal/config/       configuration and credentials
   internal/domain/       snapshot model
   internal/launchd/      automatic macOS service

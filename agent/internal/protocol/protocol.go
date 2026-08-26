@@ -1,7 +1,7 @@
 package protocol
 
 const Version = 1
-const AgentVersion = "1.5.0"
+const AgentVersion = "1.6.0"
 
 var Capabilities = []string{
 	"codex-refresh",
@@ -15,4 +15,5 @@ var Capabilities = []string{
 	"snapshot-cache",
 	"token-usage",
 	"token-usage-periods",
+	"opencode-token-usage",
 }

@@ -48,7 +48,21 @@ struct ProviderUsage: Codable, Equatable, Identifiable, Sendable {
         switch provider {
         case "codex": return "Codex"
         case "claude": return "Claude"
+        case "opencode": return "OpenCode"
         default: return provider.capitalized
+        }
+    }
+
+    var supportsRateLimitWindows: Bool { provider != "opencode" }
+    var availableDetail: String? {
+        provider == "opencode" ? "Consumo disponível no resumo de tokens." : nil
+    }
+
+    var unavailableDetail: String {
+        switch provider {
+        case "claude": return "Abra o Claude Code e envie uma mensagem para obter a primeira leitura."
+        case "opencode": return "Instale ou abra o OpenCode e execute ao menos uma sessão para obter a primeira leitura."
+        default: return "Não foi possível consultar o \(displayName) neste Mac."
         }
     }
 }
@@ -101,6 +115,16 @@ enum CombinedTokenUsage {
             return tokens.periods?[period.rawValue]?.totalTokens
         }
         return values.isEmpty ? nil : values.reduce(0, +)
+    }
+
+    static func providerLabel(providers: [ProviderUsage]) -> String {
+        providers.filter { $0.tokens != nil }.map(\.displayName).joined(separator: " + ")
+    }
+
+    static func accessibilityProviderLabel(providers: [ProviderUsage]) -> String {
+        let names = providers.filter { $0.tokens != nil }.map(\.displayName)
+        guard names.count > 1 else { return names.first ?? "" }
+        return names.dropLast().joined(separator: ", ") + " e " + (names.last ?? "")
     }
 }
 

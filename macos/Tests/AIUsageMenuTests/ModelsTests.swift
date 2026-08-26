@@ -55,4 +55,16 @@ final class ModelsTests: XCTestCase {
         XCTAssertEqual(CombinedTokenUsage.total(for: .fourteenDays, providers: snapshot.providers), 127)
         XCTAssertEqual(CombinedTokenUsage.total(for: .thirtyDays, providers: snapshot.providers), 182)
     }
+
+    func testOpenCodeUsesTokenOnlyPresentation() throws {
+        let data = Data(#"{"protocolVersion":1,"agentVersion":"1.5.0","capabilities":[],"device":"Mac","online":true,"updatedAt":"2026-08-26T12:00:00Z","providers":[{"provider":"codex","available":true,"observedAt":"2026-08-26T12:00:00Z","tokens":{"inputTokens":10,"outputTokens":2,"cachedInputTokens":0,"totalTokens":12}},{"provider":"opencode","available":true,"observedAt":"2026-08-26T12:00:00Z","tokens":{"inputTokens":20,"outputTokens":3,"cachedInputTokens":0,"totalTokens":23}}]}"#.utf8)
+        let snapshot = try JSONDecoder.usageDecoder().decode(UsageSnapshot.self, from: data)
+        let openCode = try XCTUnwrap(snapshot.providers.last)
+
+        XCTAssertEqual(openCode.displayName, "OpenCode")
+        XCTAssertFalse(openCode.supportsRateLimitWindows)
+        XCTAssertEqual(openCode.availableDetail, "Consumo disponível no resumo de tokens.")
+        XCTAssertEqual(CombinedTokenUsage.providerLabel(providers: snapshot.providers), "Codex + OpenCode")
+        XCTAssertEqual(CombinedTokenUsage.accessibilityProviderLabel(providers: snapshot.providers), "Codex e OpenCode")
+    }
 }

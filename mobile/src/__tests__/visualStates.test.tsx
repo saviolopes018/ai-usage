@@ -1,5 +1,5 @@
 import { fireEvent, render } from '@testing-library/react-native';
-import { AppTab } from '../../App';
+import { AppTab, CombinedTokens } from '../../App';
 import { ProviderSection } from '../components/ProviderSection';
 import { createTheme } from '../theme';
 
@@ -34,5 +34,24 @@ describe('visual states',()=>{
     expect(stale.getByText(/Leitura antiga/)).toBeTruthy();
     const unavailable=await render(<ProviderSection provider={{provider:'claude',available:false,observedAt:new Date(now).toISOString()}} theme={theme} now={now}/>);
     expect(unavailable.getByText('Provider indisponível')).toBeTruthy();
+  });
+
+  it('shows OpenCode token usage without quota window placeholders',async()=>{
+    const now=Date.now();
+    const provider={provider:'opencode',available:true,observedAt:new Date(now).toISOString(),tokens:{inputTokens:20,outputTokens:5,cachedInputTokens:4,totalTokens:25}};
+    const screen=await render(<ProviderSection provider={provider} theme={theme} now={now}/>);
+    expect(screen.getByText('OpenCode')).toBeTruthy();
+    expect(screen.getByText('Consumo disponível no resumo de tokens.')).toBeTruthy();
+    expect(screen.queryByText('Janela ainda não informada pelo provider')).toBeNull();
+  });
+
+  it('includes OpenCode in the combined token summary',async()=>{
+    const providers=[
+      {provider:'codex',available:true,observedAt:new Date().toISOString(),tokens:{inputTokens:10,outputTokens:2,cachedInputTokens:0,totalTokens:12}},
+      {provider:'opencode',available:true,observedAt:new Date().toISOString(),tokens:{inputTokens:20,outputTokens:3,cachedInputTokens:0,totalTokens:23}},
+    ];
+    const screen=await render(<CombinedTokens providers={providers} theme={theme}/>);
+    expect(screen.getByText('Codex + OpenCode · últimas 24h')).toBeTruthy();
+    expect(screen.getByLabelText(/35 tokens gastos por Codex e OpenCode/)).toBeTruthy();
   });
 });

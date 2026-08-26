@@ -150,7 +150,7 @@ private struct CombinedTokensView: View {
     var body: some View {
         if CombinedTokenUsage.total(for: .day, providers: providers) != nil {
             VStack(alignment: .leading, spacing: 3) {
-                Text("Claude + Codex · \(selectedPeriod.description)")
+                Text("\(CombinedTokenUsage.providerLabel(providers: providers)) · \(selectedPeriod.description)")
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(.secondary)
                 Text(total.map { "\($0.formatted(.number.notation(.compactName))) tokens" } ?? "Sem dados")
@@ -168,6 +168,7 @@ private struct CombinedTokensView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 13)
             .accessibilityElement(children: .combine)
+            .accessibilityLabel("\(total ?? 0) tokens gastos por \(CombinedTokenUsage.accessibilityProviderLabel(providers: providers)), \(selectedPeriod.description)")
         }
     }
 }
@@ -205,7 +206,7 @@ private struct ProviderView: View {
                             .resizable()
                             .scaledToFit()
                     } else {
-                        Image(systemName: "questionmark.circle.fill")
+                        Image(systemName: provider.provider == "opencode" ? "terminal.fill" : "questionmark.circle.fill")
                             .symbolRenderingMode(.hierarchical)
                             .foregroundStyle(Color.secondary)
                             .font(.system(size: 18, weight: .medium))
@@ -221,26 +222,28 @@ private struct ProviderView: View {
                         .foregroundStyle(stale ? Color.orange : Color.secondary)
                 }
                 Spacer()
-                Button(action: onRefresh) {
-                    if isRefreshing {
-                        ProgressView().controlSize(.small).frame(width: 54)
-                    } else {
-                        Text("Atualizar").frame(minWidth: 54)
+                if provider.supportsRateLimitWindows {
+                    Button(action: onRefresh) {
+                        if isRefreshing {
+                            ProgressView().controlSize(.small).frame(width: 54)
+                        } else {
+                            Text("Atualizar").frame(minWidth: 54)
+                        }
                     }
+                    .controlSize(.small)
+                    .disabled(isRefreshing || connectionState != .connected)
+                    .accessibilityLabel("Atualizar limites do \(provider.displayName)")
                 }
-                .controlSize(.small)
-                .disabled(isRefreshing || connectionState != .connected)
-                .accessibilityLabel("Atualizar limites do \(provider.displayName)")
             }
 
-            if provider.available {
+            if provider.available && provider.supportsRateLimitWindows {
                 UsageWindowView(label: "5 horas", window: provider.fiveHour)
                 UsageWindowView(label: "Semanal", window: provider.weekly)
             } else {
                 HStack(alignment: .top, spacing: 9) {
                     Image(systemName: "info.circle")
                         .foregroundStyle(.secondary)
-                    Text(provider.provider == "claude" ? "Abra o Claude Code e envie uma mensagem para obter a primeira leitura." : "Não foi possível consultar o Codex neste Mac.")
+                    Text(provider.available ? (provider.availableDetail ?? "") : provider.unavailableDetail)
                         .font(.system(size: 12))
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
