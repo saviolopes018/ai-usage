@@ -38,11 +38,28 @@ describe('visual states',()=>{
 
   it('shows OpenCode token usage without quota window placeholders',async()=>{
     const now=Date.now();
-    const provider={provider:'opencode',available:true,observedAt:new Date(now).toISOString(),tokens:{inputTokens:20,outputTokens:5,cachedInputTokens:4,totalTokens:25}};
+    const provider={provider:'opencode',available:true,observedAt:new Date(now).toISOString(),tokens:{inputTokens:20,outputTokens:5,cachedInputTokens:4,totalTokens:25,periods:{'24h':{inputTokens:20,outputTokens:5,cachedInputTokens:4,totalTokens:25},'7d':{inputTokens:70,outputTokens:10,cachedInputTokens:8,totalTokens:80},'14d':{inputTokens:120,outputTokens:20,cachedInputTokens:12,totalTokens:140},'30d':{inputTokens:200,outputTokens:30,cachedInputTokens:20,totalTokens:230}}}};
     const screen=await render(<ProviderSection provider={provider} theme={theme} now={now}/>);
     expect(screen.getByText('OpenCode')).toBeTruthy();
-    expect(screen.getByText('Consumo disponível no resumo de tokens.')).toBeTruthy();
+    expect(screen.getByLabelText('24 horas: 25 tokens')).toBeTruthy();
+    expect(screen.getByLabelText('7 dias: 80 tokens')).toBeTruthy();
+    expect(screen.getByLabelText('14 dias: 140 tokens')).toBeTruthy();
+    expect(screen.getByLabelText('30 dias: 230 tokens')).toBeTruthy();
     expect(screen.queryByText('Janela ainda não informada pelo provider')).toBeNull();
+  });
+
+  it('does not show token period rows for quota providers',async()=>{
+    const now=Date.now();
+    const provider={provider:'codex',available:true,observedAt:new Date(now).toISOString(),tokens:{inputTokens:20,outputTokens:5,cachedInputTokens:4,totalTokens:25,periods:{'7d':{inputTokens:70,outputTokens:10,cachedInputTokens:8,totalTokens:80}}}};
+    const screen=await render(<ProviderSection provider={provider} theme={theme} now={now}/>);
+    expect(screen.queryByLabelText('7 dias: 80 tokens')).toBeNull();
+  });
+
+  it('announces missing OpenCode periods as unavailable instead of zero',async()=>{
+    const now=Date.now();
+    const provider={provider:'opencode',available:true,observedAt:new Date(now).toISOString(),tokens:{inputTokens:20,outputTokens:5,cachedInputTokens:4,totalTokens:25}};
+    const screen=await render(<ProviderSection provider={provider} theme={theme} now={now}/>);
+    expect(screen.getByLabelText('7 dias: sem dados')).toBeTruthy();
   });
 
   it('includes OpenCode in the combined token summary',async()=>{

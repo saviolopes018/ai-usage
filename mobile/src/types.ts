@@ -18,7 +18,10 @@ export type TokenUsage = {
   outputTokens: number;
   cachedInputTokens: number;
   totalTokens: number;
+  periods?: Record<string, TokenPeriodUsage>;
 };
+
+export type TokenPeriodUsage = Omit<TokenUsage, 'periods'>;
 
 export type UsageSnapshot = {
   protocolVersion: number;

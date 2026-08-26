@@ -54,8 +54,14 @@ struct ProviderUsage: Codable, Equatable, Identifiable, Sendable {
     }
 
     var supportsRateLimitWindows: Bool { provider != "opencode" }
-    var availableDetail: String? {
-        provider == "opencode" ? "Consumo disponível no resumo de tokens." : nil
+    var tokenConsumptionRows: [TokenConsumptionRow] {
+        guard provider == "opencode", let tokens else { return [] }
+        return [
+            TokenConsumptionRow(label: "24 horas", totalTokens: tokens.periods?["24h"]?.totalTokens ?? tokens.totalTokens),
+            TokenConsumptionRow(label: "7 dias", totalTokens: tokens.periods?["7d"]?.totalTokens),
+            TokenConsumptionRow(label: "14 dias", totalTokens: tokens.periods?["14d"]?.totalTokens),
+            TokenConsumptionRow(label: "30 dias", totalTokens: tokens.periods?["30d"]?.totalTokens),
+        ]
     }
 
     var unavailableDetail: String {
@@ -65,6 +71,11 @@ struct ProviderUsage: Codable, Equatable, Identifiable, Sendable {
         default: return "Não foi possível consultar o \(displayName) neste Mac."
         }
     }
+}
+
+struct TokenConsumptionRow: Equatable, Sendable {
+    let label: String
+    let totalTokens: Int64?
 }
 
 struct TokenUsage: Codable, Equatable, Sendable {

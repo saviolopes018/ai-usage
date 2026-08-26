@@ -57,13 +57,19 @@ final class ModelsTests: XCTestCase {
     }
 
     func testOpenCodeUsesTokenOnlyPresentation() throws {
-        let data = Data(#"{"protocolVersion":1,"agentVersion":"1.5.0","capabilities":[],"device":"Mac","online":true,"updatedAt":"2026-08-26T12:00:00Z","providers":[{"provider":"codex","available":true,"observedAt":"2026-08-26T12:00:00Z","tokens":{"inputTokens":10,"outputTokens":2,"cachedInputTokens":0,"totalTokens":12}},{"provider":"opencode","available":true,"observedAt":"2026-08-26T12:00:00Z","tokens":{"inputTokens":20,"outputTokens":3,"cachedInputTokens":0,"totalTokens":23}}]}"#.utf8)
+        let data = Data(#"{"protocolVersion":1,"agentVersion":"1.6.0","capabilities":[],"device":"Mac","online":true,"updatedAt":"2026-08-26T12:00:00Z","providers":[{"provider":"codex","available":true,"observedAt":"2026-08-26T12:00:00Z","tokens":{"inputTokens":10,"outputTokens":2,"cachedInputTokens":0,"totalTokens":12,"periods":{"7d":{"inputTokens":30,"outputTokens":5,"cachedInputTokens":0,"totalTokens":35}}}},{"provider":"opencode","available":true,"observedAt":"2026-08-26T12:00:00Z","tokens":{"inputTokens":20,"outputTokens":3,"cachedInputTokens":0,"totalTokens":23,"periods":{"24h":{"inputTokens":20,"outputTokens":3,"cachedInputTokens":0,"totalTokens":23},"7d":{"inputTokens":40,"outputTokens":7,"cachedInputTokens":0,"totalTokens":47},"14d":{"inputTokens":60,"outputTokens":9,"cachedInputTokens":0,"totalTokens":69},"30d":{"inputTokens":90,"outputTokens":12,"cachedInputTokens":0,"totalTokens":102}}}}]}"#.utf8)
         let snapshot = try JSONDecoder.usageDecoder().decode(UsageSnapshot.self, from: data)
         let openCode = try XCTUnwrap(snapshot.providers.last)
 
         XCTAssertEqual(openCode.displayName, "OpenCode")
         XCTAssertFalse(openCode.supportsRateLimitWindows)
-        XCTAssertEqual(openCode.availableDetail, "Consumo disponível no resumo de tokens.")
+        XCTAssertEqual(openCode.tokenConsumptionRows, [
+            TokenConsumptionRow(label: "24 horas", totalTokens: 23),
+            TokenConsumptionRow(label: "7 dias", totalTokens: 47),
+            TokenConsumptionRow(label: "14 dias", totalTokens: 69),
+            TokenConsumptionRow(label: "30 dias", totalTokens: 102),
+        ])
+        XCTAssertEqual(snapshot.providers.first?.tokenConsumptionRows, [])
         XCTAssertEqual(CombinedTokenUsage.providerLabel(providers: snapshot.providers), "Codex + OpenCode")
         XCTAssertEqual(CombinedTokenUsage.accessibilityProviderLabel(providers: snapshot.providers), "Codex e OpenCode")
     }
