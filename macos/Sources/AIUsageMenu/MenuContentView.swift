@@ -240,7 +240,11 @@ private struct ProviderView: View {
                 UsageWindowView(label: "5 horas", window: provider.fiveHour)
                 UsageWindowView(label: "Semanal", window: provider.weekly)
             } else if provider.available {
-                OpenCodeConsumptionView(rows: provider.tokenConsumptionRows)
+                OpenCodeConsumptionView(
+                    title: provider.tokenConsumptionTitle ?? "",
+                    detail: provider.tokenConsumptionDetail ?? "",
+                    rows: provider.tokenConsumptionRows
+                )
             } else {
                 HStack(alignment: .top, spacing: 9) {
                     Image(systemName: "info.circle")
@@ -260,12 +264,22 @@ private struct ProviderView: View {
 }
 
 private struct OpenCodeConsumptionView: View {
+    let title: String
+    let detail: String
     let rows: [TokenConsumptionRow]
 
     private let columns = [GridItem(.flexible()), GridItem(.flexible())]
 
     var body: some View {
-        LazyVGrid(columns: columns, spacing: 8) {
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.system(size: 13, weight: .semibold))
+                Text(detail)
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+            }
+            LazyVGrid(columns: columns, spacing: 8) {
             ForEach(rows, id: \.label) { row in
                 VStack(alignment: .leading, spacing: 2) {
                     Text(row.label)
@@ -282,6 +296,7 @@ private struct OpenCodeConsumptionView: View {
                 .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 8))
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(row.totalTokens.map { "\(row.label): \($0) tokens" } ?? "\(row.label): sem dados")
+            }
             }
         }
     }

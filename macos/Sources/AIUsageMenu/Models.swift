@@ -54,6 +54,8 @@ struct ProviderUsage: Codable, Equatable, Identifiable, Sendable {
     }
 
     var supportsRateLimitWindows: Bool { provider != "opencode" }
+    var tokenConsumptionTitle: String? { provider == "opencode" ? "Consumo acumulado" : nil }
+    var tokenConsumptionDetail: String? { provider == "opencode" ? "O OpenCode informa uso de tokens, não limites de sessão." : nil }
     var tokenConsumptionRows: [TokenConsumptionRow] {
         guard provider == "opencode", let tokens else { return [] }
         return [

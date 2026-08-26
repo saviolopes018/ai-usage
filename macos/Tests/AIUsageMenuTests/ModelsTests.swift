@@ -63,6 +63,8 @@ final class ModelsTests: XCTestCase {
 
         XCTAssertEqual(openCode.displayName, "OpenCode")
         XCTAssertFalse(openCode.supportsRateLimitWindows)
+        XCTAssertEqual(openCode.tokenConsumptionTitle, "Consumo acumulado")
+        XCTAssertEqual(openCode.tokenConsumptionDetail, "O OpenCode informa uso de tokens, não limites de sessão.")
         XCTAssertEqual(openCode.tokenConsumptionRows, [
             TokenConsumptionRow(label: "24 horas", totalTokens: 23),
             TokenConsumptionRow(label: "7 dias", totalTokens: 47),
@@ -70,6 +72,8 @@ final class ModelsTests: XCTestCase {
             TokenConsumptionRow(label: "30 dias", totalTokens: 102),
         ])
         XCTAssertEqual(snapshot.providers.first?.tokenConsumptionRows, [])
+        XCTAssertNil(snapshot.providers.first?.tokenConsumptionTitle)
+        XCTAssertNil(snapshot.providers.first?.tokenConsumptionDetail)
         XCTAssertEqual(CombinedTokenUsage.providerLabel(providers: snapshot.providers), "Codex + OpenCode")
         XCTAssertEqual(CombinedTokenUsage.accessibilityProviderLabel(providers: snapshot.providers), "Codex e OpenCode")
     }

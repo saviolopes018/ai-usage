@@ -41,6 +41,8 @@ describe('visual states',()=>{
     const provider={provider:'opencode',available:true,observedAt:new Date(now).toISOString(),tokens:{inputTokens:20,outputTokens:5,cachedInputTokens:4,totalTokens:25,periods:{'24h':{inputTokens:20,outputTokens:5,cachedInputTokens:4,totalTokens:25},'7d':{inputTokens:70,outputTokens:10,cachedInputTokens:8,totalTokens:80},'14d':{inputTokens:120,outputTokens:20,cachedInputTokens:12,totalTokens:140},'30d':{inputTokens:200,outputTokens:30,cachedInputTokens:20,totalTokens:230}}}};
     const screen=await render(<ProviderSection provider={provider} theme={theme} now={now}/>);
     expect(screen.getByText('OpenCode')).toBeTruthy();
+    expect(screen.getByText('Consumo acumulado')).toBeTruthy();
+    expect(screen.getByText('O OpenCode informa uso de tokens, não limites de sessão.')).toBeTruthy();
     expect(screen.getByLabelText('24 horas: 25 tokens')).toBeTruthy();
     expect(screen.getByLabelText('7 dias: 80 tokens')).toBeTruthy();
     expect(screen.getByLabelText('14 dias: 140 tokens')).toBeTruthy();
