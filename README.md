@@ -13,7 +13,7 @@ O projeto combina um agent em Go executado no macOS com um aplicativo Expo/React
 ## Destaques
 
 - Monitoramento de janelas de uso do Codex e Claude Code.
-- Consumo de tokens do OpenCode nas últimas 24 horas, 7, 14 e 30 dias.
+- Consumo acumulado de tokens do OpenCode nas últimas 24 horas, 7, 14 e 30 dias.
 - Atualizações em tempo real por WebSocket.
 - Descoberta automática do Mac por Bonjour/mDNS.
 - Pareamento por QR code com ticket de uso único.
@@ -152,7 +152,7 @@ As leituras ativas usam automaticamente a autenticação existente do Claude Cod
 
 O collector do Codex não exige configuração adicional: ele inicia `codex app-server --stdio`, negocia a versão instalada e acompanha as atualizações de rate limit.
 
-O collector do OpenCode também não exige configuração. Ele prefere `opencode db --format json` quando a CLI está disponível e usa o banco local `~/.local/share/opencode/opencode.db` em modo somente leitura como fallback para o aplicativo Desktop. O OpenCode não publica uma cota única de 5 horas ou semanal, portanto o monitor exibe apenas tokens agregados por período.
+O collector do OpenCode também não exige configuração. Ele prefere `opencode db --format json` quando a CLI está disponível e usa o banco local `~/.local/share/opencode/opencode.db` em modo somente leitura como fallback para o aplicativo Desktop. O OpenCode não publica cotas ou limites de sessão próprios, como uma janela de 5 horas ou semanal. Por isso, o monitor mostra **consumo acumulado** de tokens por período (24 horas, 7, 14 e 30 dias), e não percentual restante nem horário de renovação.
 
 ### 3. Instale as dependências do app
 
