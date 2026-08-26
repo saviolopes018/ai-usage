@@ -239,11 +239,17 @@ private struct ProviderView: View {
             if provider.available && provider.supportsRateLimitWindows {
                 UsageWindowView(label: "5 horas", window: provider.fiveHour)
                 UsageWindowView(label: "Semanal", window: provider.weekly)
+            } else if provider.available {
+                OpenCodeConsumptionView(
+                    title: provider.tokenConsumptionTitle ?? "",
+                    detail: provider.tokenConsumptionDetail ?? "",
+                    rows: provider.tokenConsumptionRows
+                )
             } else {
                 HStack(alignment: .top, spacing: 9) {
                     Image(systemName: "info.circle")
                         .foregroundStyle(.secondary)
-                    Text(provider.available ? (provider.availableDetail ?? "") : provider.unavailableDetail)
+                    Text(provider.unavailableDetail)
                         .font(.system(size: 12))
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -254,6 +260,45 @@ private struct ProviderView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 15)
+    }
+}
+
+private struct OpenCodeConsumptionView: View {
+    let title: String
+    let detail: String
+    let rows: [TokenConsumptionRow]
+
+    private let columns = [GridItem(.flexible()), GridItem(.flexible())]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.system(size: 13, weight: .semibold))
+                Text(detail)
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+            }
+            LazyVGrid(columns: columns, spacing: 8) {
+            ForEach(rows, id: \.label) { row in
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(row.label)
+                        .font(.system(size: 10.5, weight: .medium))
+                        .foregroundStyle(.secondary)
+                    Text(row.totalTokens.map { $0.formatted(.number.notation(.compactName)) } ?? "—")
+                        .font(.system(size: 18, weight: .semibold, design: .rounded).monospacedDigit())
+                    Text("tokens")
+                        .font(.system(size: 9.5))
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(10)
+                .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 8))
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(row.totalTokens.map { "\(row.label): \($0) tokens" } ?? "\(row.label): sem dados")
+            }
+            }
+        }
     }
 }
 
