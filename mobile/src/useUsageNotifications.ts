@@ -43,7 +43,7 @@ export function computeUsageAlerts(previous:UsageSnapshot|null,current:UsageSnap
     }}return alerts;
 }
 function add(alerts:UsageAlert[],emitted:Set<string>,key:string,title:string,body:string){if(emitted.has(key))return;emitted.add(key);alerts.push({key,title,body})}
-function display(provider:ProviderUsage){return provider.provider==='codex'?'Codex':provider.provider==='claude'?'Claude':provider.provider}
+function display(provider:ProviderUsage){return provider.provider==='codex'?'Codex':provider.provider==='claude'?'Claude':provider.provider==='opencode'?'OpenCode':provider.provider}
 export function isQuietHour(hour:number,start:number,end:number){return start===end||start<end?hour>=start&&hour<end:hour>=start||hour<end}
 export function estimateHoursToEmpty(history:UsageSnapshot[],current:UsageSnapshot,providerName:string,windowName:'5h'|'weekly'){
   const samples=[...history.filter(item=>item.updatedAt!==current.updatedAt),current].slice(-12).map(item=>{const provider=item.providers.find(value=>value.provider===providerName);const window=windowName==='5h'?provider?.fiveHour:provider?.weekly;return provider&&window?{at:new Date(provider.observedAt).getTime(),used:window.usedPercentage,remaining:window.remainingPercentage,reset:window.resetsAt}:null}).filter((item):item is NonNullable<typeof item>=>Boolean(item)).filter(item=>item.reset===(windowName==='5h'?current.providers.find(value=>value.provider===providerName)?.fiveHour?.resetsAt:current.providers.find(value=>value.provider===providerName)?.weekly?.resetsAt)).sort((a,b)=>a.at-b.at);

@@ -55,7 +55,7 @@ func TestSubscribeWithInitialIsAtomic(t *testing.T) {
 	updates, unsubscribe := s.SubscribeWithInitial()
 	defer unsubscribe()
 	initial := <-updates
-	if len(initial.Providers) != 2 {
+	if len(initial.Providers) != 3 {
 		t.Fatalf("unexpected initial snapshot: %+v", initial)
 	}
 	s.UpdateProvider(domain.ProviderUsage{Provider: "codex", Available: true, ObservedAt: time.Now().UTC()})

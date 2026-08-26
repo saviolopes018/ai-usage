@@ -234,7 +234,7 @@ func TestWebSocketInitialAndUpdatedSnapshot(t *testing.T) {
 	if err := conn.ReadJSON(&initial); err != nil {
 		t.Fatal(err)
 	}
-	if len(initial.Providers) != 2 {
+	if len(initial.Providers) != 3 {
 		t.Fatalf("unexpected initial: %+v", initial)
 	}
 	st.UpdateProvider(domain.ProviderUsage{Provider: "codex", Available: true, ObservedAt: time.Now().UTC()})

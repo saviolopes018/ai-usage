@@ -68,12 +68,16 @@ export function AppTab({label,icon,selectedIcon,accessibilityLabel,selected,onPr
   return <Pressable accessibilityRole="tab" accessibilityLabel={accessibilityLabel??label} accessibilityState={{selected}} onPress={onPress} style={({pressed})=>[styles.tab,{backgroundColor:selected?theme.colors.primarySoft:'transparent',opacity:pressed?.65:1}]}><Icon name={selected?selectedIcon:icon} size={21} color={selected?theme.colors.primary:theme.colors.muted}/><Text style={[styles.tabText,{color:selected?theme.colors.primary:theme.colors.muted,fontWeight:selected?'700':'600'}]}>{label}</Text></Pressable>;
 }
 
-function CombinedTokens({providers,theme}:{providers:ProviderUsage[];theme:ReturnType<typeof createTheme>}) {
-  const values=providers.map(provider=>provider.tokens).filter((tokens):tokens is NonNullable<ProviderUsage['tokens']>=>Boolean(tokens));
+export function CombinedTokens({providers,theme}:{providers:ProviderUsage[];theme:ReturnType<typeof createTheme>}) {
+  const withTokens=providers.filter((provider):provider is ProviderUsage&{tokens:NonNullable<ProviderUsage['tokens']>}=>Boolean(provider.tokens));
+  const values=withTokens.map(provider=>provider.tokens);
   if(values.length===0)return null;
   const total=values.reduce((sum,tokens)=>sum+tokens.totalTokens,0);
+  const names=withTokens.map(provider=>provider.provider==='codex'?'Codex':provider.provider==='claude'?'Claude':provider.provider==='opencode'?'OpenCode':provider.provider);
+  const label=names.join(' + ');
+  const accessibleNames=names.length>1?`${names.slice(0,-1).join(', ')} e ${names.at(-1)}`:names[0];
   const format=(value:number)=>new Intl.NumberFormat('pt-BR',{notation:value>=10_000?'compact':'standard',maximumFractionDigits:1}).format(value);
-  return <View style={[styles.combinedTokens,{borderBottomColor:theme.colors.line}]} accessible accessibilityLabel={`${format(total)} tokens gastos por Claude e Codex nas últimas 24 horas`}><Text style={[styles.combinedLabel,{color:theme.colors.muted}]}>Claude + Codex · últimas 24h</Text><Text style={[styles.combinedTotal,{color:theme.colors.ink}]}>{format(total)} tokens</Text></View>;
+  return <View style={[styles.combinedTokens,{borderBottomColor:theme.colors.line}]} accessible accessibilityLabel={`${format(total)} tokens gastos por ${accessibleNames} nas últimas 24 horas`}><Text style={[styles.combinedLabel,{color:theme.colors.muted}]}>{label} · últimas 24h</Text><Text style={[styles.combinedTotal,{color:theme.colors.ink}]}>{format(total)} tokens</Text></View>;
 }
 
 export default function App(){return <SafeAreaProvider><Monitor/></SafeAreaProvider>}
